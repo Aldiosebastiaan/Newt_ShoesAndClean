@@ -138,7 +138,7 @@ export default function HomePage() {
             animate={isMounted ? "visible" : "hidden"}
             variants={slideInRight}
             transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
-            className="h-96 rounded-3xl overflow-hidden flex items-center justify-center"
+            className="h-134 rounded-3xl overflow-hidden flex items-center justify-center"
           >
             <Image
               src="/hero_img.jpg"
@@ -212,8 +212,6 @@ export default function HomePage() {
               </motion.span>
             </motion.a>
           </motion.div>
-
-          {/* CARDS GRID - ANIMASI SMOOTH */}
           {/* CARDS GRID - ANIMASI SMOOTH */}
 <motion.div 
   className="mt-10 grid grid-cols-2 sm:grid-cols-4 gap-8" 
