@@ -80,15 +80,45 @@ export default function ServicesPage() {
             Hasil nyata dari layanan Newt Shoes & Clean
           </p>
 
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 md:grid-cols-3">
-            {[1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className="rounded-xl bg-[#e6dccb] h-40 flex items-center justify-center text-sm text-[#5c4a2f]"
-              >
-                Before / After Image
+          <div className="mt-8 grid gap-6 sm:grid-cols-2 md:grid-cols-3">
+            {/* Gambar 1 */}
+            <div className="rounded-xl overflow-hidden bg-[#e6dccb]">
+              <div className="relative w-full h-full">
+                <Image
+                  src="/before_after1.jpg"
+                  alt="Contoh hasil cleaning sepatu 1"
+                  fill
+                  style={{ objectFit: "cover" }}
+                  sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                />
               </div>
-            ))}
+            </div>
+
+            {/* Gambar 2 */}
+            <div className="rounded-xl overflow-hidden bg-[#e6dccb]">
+              <div className="relative w-full h-80">
+                <Image
+                  src="/before_after2.jpg"
+                  alt="Contoh hasil cleaning sepatu 2"
+                  fill
+                  style={{ objectFit: "cover" }}
+                  sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                />
+              </div>
+            </div>
+
+            {/* Gambar 3 */}
+            <div className="rounded-xl overflow-hidden bg-[#e6dccb]">
+              <div className="relative w-full h-full">
+                <Image
+                  src="/before_after3.jpg"
+                  alt="Contoh hasil cleaning sepatu 3"
+                  fill
+                  style={{ objectFit: "cover" }}
+                  sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                />
+              </div>
+            </div>
           </div>
         </div>
 

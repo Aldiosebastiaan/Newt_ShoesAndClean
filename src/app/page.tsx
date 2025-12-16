@@ -45,52 +45,65 @@ export default function HomePage() {
       </section>
 
       {/* PACKAGES */}
-      <section className="mx-auto max-w-7xl px-4">
-        <h2 className="text-center text-5xl font-bold text-[#3a2f1c]">Paket & Harga</h2>
-        <div className="mt-14 grid gap-8 md:grid-cols-3">
-          {["Basic", "Premium", "Ultimate"].map((plan, i) => (
-            <div
-              key={plan}
-              className={`rounded-3xl border p-8 shadow-sm bg-[#f4efe8] ${
-                i === 1 ? "border-[#be9020] shadow-md" : "border-[#be9020]/30"
-              }`}
-            >
-              <h3 className="text-xl font-bold text-[#be9020]">{plan}</h3>
-              <p className="mt-4 text-4xl font-extrabold text-[#3a2f1c]">Rp {i === 0 ? "50K" : i === 1 ? "80K" : "120K"}</p>
-              <p className="mt-2 text-sm text-[#5c4a2f]">per pasang</p>
-              <ul className="mt-6 space-y-2 text-sm text-[#5c4a2f]">
-                <li>• Deep Cleaning</li>
-                <li>• Odor Treatment</li>
-                {i > 0 && <li>• Protection</li>}
-                {i > 1 && <li>• Repaint Minor</li>}
-              </ul>
-              <Link
-                href="/booking"
-                className="mt-6 block text-center rounded-xl bg-[#be9020] py-2 font-semibold text-[#f4efe8] hover:bg-[#a67c1c]"
-              >
-                Pilih Paket
-              </Link>
-            </div>
-          ))}
-        </div>
-      </section>
+      <section className="bg-[#f4ecdf]">
+  <div className="mx-auto max-w-6xl px-4 py-14">
 
-      {/* SERVICES */}
-      <section className="bg-[#f4efe8] py-24">
-        <div className="mx-auto max-w-7xl px-6">
-          <h2 className="text-center text-5xl font-bold text-[#3a2f1c]">Layanan Kami</h2>
-          <div className="mt-14 grid gap-8 md:grid-cols-5">
-            {["Deep Cleaning", "Protection", "Repainting", "Whitening", "Repairs"].map((service) => (
-              <div
-                key={service}
-                className="rounded-2xl border border-[#be9020]/30 bg-[#ede4d6] p-6 text-center hover:shadow-md transition"
-              >
-                <p className="font-semibold text-[#3a2f1c]">{service}</p>
-              </div>
-            ))}
-          </div>
+    {/* HEADER */}
+    <div className="flex items-center justify-between">
+      <div>
+        <h2 className="text-2xl sm:text-3xl font-extrabold text-[#3a2f1c]">
+          Paket & Harga
+        </h2>
+        <p className="mt-1 text-xs sm:text-sm text-[#5c4a2f]">
+          Beberapa layanan favorit pelanggan
+        </p>
+      </div>
+
+      <a
+        href="/pricing"
+        className="inline-flex items-center gap-2 rounded-full border border-[#be9020] px-4 py-2 text-sm font-semibold text-[#be9020] hover:bg-[#be9020] hover:text-[#3a2f1c] transition"
+      >
+        Lihat Detail
+        <span>→</span>
+      </a>
+    </div>
+
+    {/* CARDS */}
+    <div className="mt-10 grid grid-cols-2 sm:grid-cols-4 gap-6">
+      {[
+        { title: "Cleaning", price: "25K" },
+        { title: "Deep Clean", price: "30K", popular: true },
+        { title: "Whitening", price: "35K" },
+        { title: "Unyellowing", price: "45K" },
+      ].map((item) => (
+        <div
+          key={item.title}
+          className={`relative rounded-2xl bg-[#ede4d6] p-6 text-center border transition-all duration-300
+            ${
+              item.popular
+                ? "border-[#be9020] shadow-lg scale-[1.03]"
+                : "border-[#be9020]/30 hover:scale-[1.03] hover:shadow-md"
+            }`}
+        >
+          {item.popular && (
+            <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-[#be9020] px-3 py-1 text-[10px] font-bold text-[#3a2f1c]">
+              MOST POPULAR
+            </span>
+          )}
+
+          <p className="text-3xl font-extrabold text-[#be9020]">
+            {item.price}
+          </p>
+          <p className="mt-2 text-sm font-semibold text-[#3a2f1c]">
+            {item.title}
+          </p>
         </div>
-      </section>
+      ))}
+    </div>
+
+  </div>
+</section>
+
 
       {/* TESTIMONIALS */}
       <section className="mx-auto max-w-7xl px-6">
@@ -112,7 +125,7 @@ export default function HomePage() {
       </section>
 
       {/* CTA */}
-      <section className="bg-[#be9020]">
+      <section className="bg-linear-to-r from-[#8b6627] via-[#d28a26] to-[#b6770a]">
         <div className="mx-auto max-w-7xl px-6 py-20 text-center">
           <h2 className="text-4xl font-extrabold text-[#f4efe8]">
             Siap Bersihin Sepatu Favoritmu?

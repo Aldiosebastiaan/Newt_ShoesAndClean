@@ -92,15 +92,16 @@ export default function PricingPage() {
 
                 {/* CTA BUTTON */}
                 <Link
-                  href="/booking"
-                  className={`block text-center rounded-xl py-3 font-semibold transition-all ${
-                    item.popular
-                      ? 'bg-linear-to-r from-[#be9020] to-[#d4a734] text-white hover:shadow-lg'
-                      : 'bg-[#f4ecdf] text-[#3a2f1c] hover:bg-[#ebe0cc]'
-                  }`}
-                >
-                  Pilih Layanan
-                </Link>
+  href={`/booking?service=${encodeURIComponent(item.title)}&price=${item.price}`}
+  className={`block text-center rounded-xl py-3 font-semibold transition-all ${
+    item.popular
+      ? 'bg-linear-to-r from-[#be9020] to-[#d4a734] text-white hover:shadow-lg'
+      : 'bg-[#f4ecdf] text-[#3a2f1c] hover:bg-[#ebe0cc]'
+  }`}
+>
+  Pilih Layanan
+</Link>
+
               </div>
             </div>
           ))}

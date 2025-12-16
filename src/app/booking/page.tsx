@@ -1,9 +1,19 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
+
 
 export default function BookingPage() {
   const [pickup, setPickup] = useState(false);
+
+  const searchParams = useSearchParams();
+
+const serviceFromUrl = searchParams.get("service");
+const priceFromUrl = searchParams.get("price");
+
+const [selectedService, setSelectedService] = useState(serviceFromUrl || "");
+
 
   return (
     <section className="min-h-screen bg-linear-to-br from-[#f4efe8] via-[#f0e6d2] to-[#e8dbc3]">
@@ -48,6 +58,15 @@ export default function BookingPage() {
           <p className="mt-1 text-xs sm:text-sm text-[#5c4a2f]">
             Lengkapi data di bawah ini
           </p>
+
+          {selectedService && (
+  <div className="mt-3 mb-4 flex items-center gap-2 rounded-lg bg-[#be9020]/10 px-4 py-2 text-sm text-[#3a2f1c]">
+    <span className="h-2 w-2 rounded-full bg-[#be9020]" />
+    Layanan <strong>{selectedService}</strong> telah dipilih
+  </div>
+)}
+
+
 
           <form className="mt-4 sm:mt-6 md:mt-8 space-y-4 sm:space-y-5 md:space-y-6">
             <div className="grid gap-4 sm:gap-5 md:gap-6 md:grid-cols-2">
@@ -110,42 +129,28 @@ export default function BookingPage() {
             </div>
 
             <div>
-              <label className="text-xs sm:text-sm font-semibold text-[#3a2f1c]">
-                Paket
-              </label>
+  <label className="text-xs sm:text-sm font-semibold text-[#3a2f1c]">
+    Layanan Dipilih
+  </label>
 
-              <div className="mt-2 sm:mt-3 grid grid-cols-3 gap-2 sm:gap-3 md:gap-4">
-                {["Basic", "Premium", "Ultimate"].map((pkg) => (
-                  <label
-                    key={pkg}
-                    className="
-          cursor-pointer
-          rounded-lg sm:rounded-xl md:rounded-2xl
-          border border-[#be9020]/30
-          bg-[#ede4d6]
-          px-3 py-2 sm:px-4 sm:py-3 md:px-5 md:py-4
-          flex items-center justify-center
-          hover:border-[#be9020]
-          transition-colors
-        "
-                  >
-                    <input type="radio" name="package" className="hidden" />
+  <div className="mt-3 rounded-xl border border-[#be9020]/30 bg-[#ede4d6] px-4 py-3">
+    {selectedService ? (
+      <div className="flex items-center justify-between">
+        <span className="font-semibold text-[#3a2f1c]">
+          {selectedService}
+        </span>
+        <span className="font-bold text-[#be9020]">
+          Rp {priceFromUrl}
+        </span>
+      </div>
+    ) : (
+      <span className="text-sm text-[#5c4a2f]">
+        Silakan pilih layanan dari halaman Pricing
+      </span>
+    )}
+  </div>
+</div>
 
-                    <span
-                      className="
-          font-bold
-          text-[#be9020]
-          text-xs sm:text-sm md:text-base
-          leading-none
-          whitespace-nowrap
-        "
-                    >
-                      {pkg}
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </div>
 
             <div className="flex items-center gap-2 sm:gap-3">
               <input
