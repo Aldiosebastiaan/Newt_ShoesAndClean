@@ -141,7 +141,7 @@ export default function HomePage() {
             className="h-134 rounded-3xl overflow-hidden flex items-center justify-center"
           >
             <Image
-              src="/hero_img.jpg"
+              src="/hero_image.jpg"
               alt="Premium Shoe Cleaning Service"
               width={600}
               height={400}
