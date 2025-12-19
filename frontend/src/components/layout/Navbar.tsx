@@ -2,9 +2,13 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
 
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user, isAuthenticated, logout } = useAuth();
+  const router = useRouter();
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -12,6 +16,12 @@ export function Navbar() {
 
   const closeMenu = () => {
     setIsMenuOpen(false);
+  };
+
+  const handleLogout = () => {
+    logout();
+    closeMenu();
+    router.push("/");
   };
 
   return (
@@ -50,16 +60,41 @@ export function Navbar() {
           >
             Booking
           </Link>
+          {isAuthenticated && (
+            <Link
+              href="/my-bookings"
+              className="hover:text-[#be9020] transition-colors duration-200"
+            >
+              My Bookings
+            </Link>
+          )}
         </nav>
 
-        {/* Desktop Login Button */}
+        {/* Desktop Auth Section */}
         <div className="hidden md:flex items-center gap-4">
-          <Link
-            href="/login"
-            className="rounded-xl bg-[#252527] px-5 py-2 text-sm font-semibold text-white hover:bg-[#be9020] transition-colors duration-200"
-          >
-            Login
-          </Link>
+          {isAuthenticated ? (
+            <div className="flex items-center gap-3">
+              <div className="text-right">
+                <p className="text-sm font-semibold text-[#252527]">
+                  {user?.name}
+                </p>
+                <p className="text-xs text-[#5c4a2f]">{user?.email}</p>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="rounded-xl bg-red-600 px-5 py-2 text-sm font-semibold text-white hover:bg-red-700 transition-colors duration-200"
+              >
+                Logout
+              </button>
+            </div>
+          ) : (
+            <Link
+              href="/login"
+              className="rounded-xl bg-[#252527] px-5 py-2 text-sm font-semibold text-white hover:bg-[#be9020] transition-colors duration-200"
+            >
+              Login
+            </Link>
+          )}
         </div>
 
         {/* Mobile Hamburger Button */}
@@ -112,9 +147,18 @@ export function Navbar() {
           <div className="h-full flex flex-col">
             {/* Header */}
             <div className="p-6 border-b border-gray-100 bg-white">
-              <span className="text-xl font-extrabold text-[#252527]">
-                Newt Shoes&Clean
-              </span>
+              {isAuthenticated ? (
+                <div>
+                  <p className="text-lg font-bold text-[#252527]">
+                    {user?.name}
+                  </p>
+                  <p className="text-sm text-[#5c4a2f]">{user?.email}</p>
+                </div>
+              ) : (
+                <span className="text-xl font-extrabold text-[#252527]">
+                  Newt Shoes&Clean
+                </span>
+              )}
             </div>
 
             {/* Navigation Links */}
@@ -147,19 +191,37 @@ export function Navbar() {
               >
                 Booking
               </Link>
+              {isAuthenticated && (
+                <Link
+                  href="/my-bookings"
+                  onClick={closeMenu}
+                  className="flex items-center text-lg font-medium text-[#3a2f1c] hover:text-[#be9020] p-3 rounded-lg hover:bg-gray-50 transition-all duration-200"
+                >
+                  My Bookings
+                </Link>
+              )}
             </nav>
 
-            {/* Footer with Login Button */}
+            {/* Footer with Auth Button */}
             <div className="p-6 border-t border-gray-100 bg-white">
-              <Link
-                href="/account"
-                onClick={closeMenu}
-                className="block w-full rounded-xl bg-[#252527] px-5 py-3 text-center font-semibold text-white hover:bg-[#be9020] transition-colors duration-200"
-              >
-                Login
-              </Link>
+              {isAuthenticated ? (
+                <button
+                  onClick={handleLogout}
+                  className="block w-full rounded-xl bg-red-600 px-5 py-3 text-center font-semibold text-white hover:bg-red-700 transition-colors duration-200"
+                >
+                  Logout
+                </button>
+              ) : (
+                <Link
+                  href="/login"
+                  onClick={closeMenu}
+                  className="block w-full rounded-xl bg-[#252527] px-5 py-3 text-center font-semibold text-white hover:bg-[#be9020] transition-colors duration-200"
+                >
+                  Login
+                </Link>
+              )}
               <p className="mt-4 text-center text-sm text-gray-500">
-                © 2024 Newt Shoes&Clean
+                © 2025 Newt Shoes&Clean
               </p>
             </div>
           </div>

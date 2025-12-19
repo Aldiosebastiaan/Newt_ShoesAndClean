@@ -7,9 +7,11 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { authApi } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { refreshUser } = useAuth();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -28,6 +30,7 @@ export default function LoginPage() {
       setError(result.error);
       setLoading(false);
     } else {
+      refreshUser();
       router.push("/booking");
     }
   };

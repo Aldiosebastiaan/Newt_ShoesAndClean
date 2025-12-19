@@ -7,9 +7,11 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { authApi } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { refreshUser } = useAuth();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -35,6 +37,7 @@ export default function RegisterPage() {
       setError(result.error);
       setLoading(false);
     } else {
+      refreshUser();
       router.push("/booking");
     }
   };
@@ -88,7 +91,7 @@ export default function RegisterPage() {
                 onChange={handleChange}
                 required
                 className="w-full px-4 py-3 rounded-xl border border-[#be9020]/30 focus:outline-none focus:ring-2 focus:ring-[#be9020] focus:border-transparent transition-all"
-                placeholder="Nama kamu"
+                placeholder="Namakamuuu"
               />
             </div>
 
@@ -107,7 +110,7 @@ export default function RegisterPage() {
                 onChange={handleChange}
                 required
                 className="w-full px-4 py-3 rounded-xl border border-[#be9020]/30 focus:outline-none focus:ring-2 focus:ring-[#be9020] focus:border-transparent transition-all"
-                placeholder="emailmu@gmail.com"
+                placeholder="emailmuuuu@email.com"
               />
             </div>
 
