@@ -75,7 +75,7 @@ export default function ServicesPage() {
   const isInView = useInView(ref, { once: true, amount: 0.1 });
 
   return (
-    <section className="bg-[#f4ecdf]">
+    <section className="bg-linear-to-b from-[#f9f5eb] to-[#f4ecdf]">
       <div className="mx-auto max-w-6xl px-4 py-12 sm:py-16 md:py-20">
 
         {/* HERO */}

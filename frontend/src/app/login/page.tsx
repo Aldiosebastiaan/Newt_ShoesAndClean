@@ -31,7 +31,7 @@ export default function LoginPage() {
       setLoading(false);
     } else {
       refreshUser();
-      router.push("/booking");
+      router.push("/");
     }
   };
 

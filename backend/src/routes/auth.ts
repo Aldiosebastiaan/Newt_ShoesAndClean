@@ -95,12 +95,14 @@ router.post("/login", async (req: Request, res: Response): Promise<void> => {
     }
 
     // Generate JWT
-    const token = jwt.sign(
-      { userId: user.id, email: user.email },
+const token = jwt.sign(
+      { 
+        userId: user.id, 
+        email: user.email, 
+        role: user.role // <--- PENTING: Masukkan role ke token
+      },
       process.env.JWT_SECRET || "your-secret-key",
-      {
-        expiresIn: "7d",
-      }
+      { expiresIn: "7d" }
     );
 
     res.json({
@@ -111,6 +113,7 @@ router.post("/login", async (req: Request, res: Response): Promise<void> => {
         name: user.name,
         email: user.email,
         phone: user.phone,
+        role: user.role, // Kirim role ke frontend juga
       },
     });
   } catch (error) {

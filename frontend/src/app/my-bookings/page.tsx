@@ -14,6 +14,7 @@ interface Booking {
   pickup_time: string;
   status: string;
   created_at: string;
+  total_price?: number; // Tambahkan ini agar harga tampil
   notes?: string;
 }
 
@@ -33,14 +34,24 @@ export default function MyBookingsPage() {
   }, [router]);
 
   const fetchBookings = async () => {
-    const result = await bookingApi.getAll();
+    try {
+      const result = await bookingApi.getAll();
 
-    if (result.error) {
-      setError(result.error);
-    } else {
-      setBookings(result.data.bookings || []);
+      if (result.error) {
+        setError(result.error);
+      } else {
+        // --- PERBAIKAN DI SINI ---
+        // Backend mengirim array langsung, jadi ambil result.data
+        // Cek apakah result.data itu array, jika ya pakai, jika tidak array kosong
+        const dataBookings = Array.isArray(result.data) ? result.data : [];
+        setBookings(dataBookings);
+        // -------------------------
+      }
+    } catch (err) {
+      setError("Failed to load bookings");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const getStatusColor = (status: string) => {
@@ -48,9 +59,8 @@ export default function MyBookingsPage() {
       case "pending":
         return "bg-yellow-100 text-yellow-800 border-yellow-300";
       case "confirmed":
+      case "processing": // Status yang kita set setelah bayar
         return "bg-blue-100 text-blue-800 border-blue-300";
-      case "processing":
-        return "bg-purple-100 text-purple-800 border-purple-300";
       case "completed":
         return "bg-green-100 text-green-800 border-green-300";
       case "cancelled":
@@ -61,8 +71,8 @@ export default function MyBookingsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#F9F8F6] via-[#f4efe8] to-[#f7f1e9] py-12 px-4">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-linear-to-b from-[#f9f5eb] to-[#f4ecdf] py-12 px-4">
+      <div className="max-w-4xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -70,109 +80,80 @@ export default function MyBookingsPage() {
         >
           <div className="flex justify-between items-center mb-8">
             <div>
-              <h1 className="text-3xl md:text-4xl font-bold text-[#3a2f1c]">
-                My Bookings
-              </h1>
-              <p className="text-[#5c4a2f] mt-2">
-                Manage your shoe cleaning orders
-              </p>
+              <h1 className="text-3xl font-bold text-[#3a2f1c]">My Bookings</h1>
+              <p className="text-[#5c4a2f] mt-1">Riwayat pesanan cuci sepatu kamu</p>
             </div>
             <button
               onClick={() => router.push("/booking")}
-              className="bg-[#be9020] text-white px-6 py-3 rounded-xl font-semibold hover:bg-[#a67c1c] transition-all"
+              className="bg-[#be9020] text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-[#a67c1c] transition-all shadow-md"
             >
-              New Booking
+              + Booking Baru
             </button>
           </div>
 
           {loading ? (
-            <div className="text-center py-12">
-              <div className="inline-block w-12 h-12 border-4 border-[#be9020] border-t-transparent rounded-full animate-spin"></div>
-              <p className="mt-4 text-[#5c4a2f]">Loading bookings...</p>
+            <div className="text-center py-20">
+              <div className="inline-block w-10 h-10 border-4 border-[#be9020] border-t-transparent rounded-full animate-spin"></div>
+              <p className="mt-4 text-gray-500">Memuat data...</p>
             </div>
           ) : error ? (
             <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-xl">
               {error}
             </div>
           ) : bookings.length === 0 ? (
-            <div className="text-center py-12 bg-white rounded-3xl shadow-lg">
-              <p className="text-[#5c4a2f] text-lg">No bookings yet</p>
+            <div className="text-center py-16 bg-white rounded-3xl shadow-sm border border-gray-100">
+              <p className="text-gray-400 text-lg mb-4">Belum ada riwayat booking.</p>
               <button
                 onClick={() => router.push("/booking")}
-                className="mt-4 bg-[#be9020] text-white px-6 py-3 rounded-xl font-semibold hover:bg-[#a67c1c] transition-all"
+                className="text-[#be9020] font-bold hover:underline"
               >
-                Make Your First Booking
+                Buat pesanan pertamamu sekarang
               </button>
             </div>
           ) : (
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="space-y-4">
               {bookings.map((booking, index) => (
                 <motion.div
                   key={booking.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
-                  className="bg-white rounded-2xl shadow-lg p-6 border border-[#be9020]/20 hover:shadow-xl transition-shadow"
+                  className="bg-white rounded-2xl p-6 shadow-sm border border-[#be9020]/10 hover:shadow-md transition-shadow"
                 >
                   <div className="flex justify-between items-start mb-4">
                     <div>
-                      <h3 className="text-xl font-bold text-[#3a2f1c]">
+                      <h3 className="text-lg font-bold text-[#3a2f1c]">
                         {booking.service}
                       </h3>
-                      <p className="text-sm text-[#5c4a2f] mt-1">
-                        Order #{booking.id}
+                      <p className="text-xs text-gray-400 uppercase font-bold tracking-wider mt-1">
+                        ORDER #{booking.id}
                       </p>
                     </div>
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-semibold border ${getStatusColor(
-                        booking.status
-                      )}`}
-                    >
-                      {booking.status.toUpperCase()}
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide border ${getStatusColor(booking.status)}`}>
+                      {booking.status}
                     </span>
                   </div>
 
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-center gap-2 text-[#5c4a2f]">
-                      <span className="font-semibold">Shoe Type:</span>
-                      <span>{booking.shoe_type}</span>
+                  <div className="grid md:grid-cols-2 gap-4 text-sm text-gray-600 border-t border-dashed border-gray-200 pt-4">
+                    <div>
+                      <p className="text-gray-400 text-xs mb-1">DETAIL SEPATU</p>
+                      <p className="font-medium text-[#3a2f1c]">{booking.shoe_type}</p>
                     </div>
-                    <div className="flex items-center gap-2 text-[#5c4a2f]">
-                      <span className="font-semibold">Pickup Date:</span>
-                      <span>
-                        {new Date(booking.pickup_date).toLocaleDateString(
-                          "id-ID"
-                        )}
-                      </span>
+                    <div>
+                      <p className="text-gray-400 text-xs mb-1">JADWAL PICKUP</p>
+                      <p className="font-medium text-[#3a2f1c]">
+                         {new Date(booking.pickup_date).toLocaleDateString("id-ID", { day: 'numeric', month: 'long', year: 'numeric' })} • {booking.pickup_time}
+                      </p>
                     </div>
-                    <div className="flex items-center gap-2 text-[#5c4a2f]">
-                      <span className="font-semibold">Pickup Time:</span>
-                      <span>{booking.pickup_time}</span>
-                    </div>
-                    <div className="flex items-start gap-2 text-[#5c4a2f]">
-                      <span className="font-semibold">Address:</span>
-                      <span className="flex-1">{booking.pickup_address}</span>
+                    <div className="md:col-span-2">
+                       <p className="text-gray-400 text-xs mb-1">ALAMAT</p>
+                       <p className="font-medium text-[#3a2f1c]">{booking.pickup_address}</p>
                     </div>
                     {booking.notes && (
-                      <div className="flex items-start gap-2 text-[#5c4a2f]">
-                        <span className="font-semibold">Notes:</span>
-                        <span className="flex-1">{booking.notes}</span>
+                      <div className="md:col-span-2 bg-yellow-50 p-2 rounded-lg">
+                        <span className="font-bold text-xs text-yellow-700">Catatan:</span> <span className="text-yellow-800">{booking.notes}</span>
                       </div>
                     )}
-                  </div>
-
-                  <div className="mt-4 pt-4 border-t border-[#be9020]/20">
-                    <p className="text-xs text-[#5c4a2f]">
-                      Booked on{" "}
-                      {new Date(booking.created_at).toLocaleDateString(
-                        "id-ID",
-                        {
-                          day: "numeric",
-                          month: "long",
-                          year: "numeric",
-                        }
-                      )}
-                    </p>
                   </div>
                 </motion.div>
               ))}

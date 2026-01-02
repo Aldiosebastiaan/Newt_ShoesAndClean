@@ -7,6 +7,8 @@ import cors from "cors";
 import dotenv from "dotenv";
 import authRoutes from "./routes/auth";
 import bookingRoutes from "./routes/booking";
+import adminRoutes from "./routes/admin";
+import servicesRoutes from "./routes/services";
 
 dotenv.config();
 
@@ -25,7 +27,9 @@ app.use(express.urlencoded({ extended: true }));
 
 // Routes
 app.use("/api/auth", authRoutes);
-app.use("/api/booking", bookingRoutes);
+app.use("/api/bookings", bookingRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/services", servicesRoutes);
 
 // Health check
 app.get("/api/health", (req: Request, res: Response) => {

@@ -4,6 +4,8 @@ import dotenv from "dotenv";
 import authRoutes from "./routes/auth";
 import bookingRoutes from "./routes/booking";
 import "./config/database"; // Initialize database connection
+import adminRoutes from "./routes/admin";
+import servicesRoutes from "./routes/services";
 
 dotenv.config();
 
@@ -17,7 +19,9 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
-app.use("/api/booking", bookingRoutes);
+app.use("/api/bookings", bookingRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/services", servicesRoutes);
 
 const PORT = process.env.PORT || 5000;
 

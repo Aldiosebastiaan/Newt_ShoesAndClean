@@ -1,131 +1,138 @@
 import { Router, type Request, type Response } from "express";
 import pool from "../config/database";
 import { authMiddleware } from "../middleware/auth";
-import type { RowDataPacket, ResultSetHeader } from "mysql2";
+import type { ResultSetHeader } from "mysql2";
+// 1. Import Midtrans
+const midtransClient = require("midtrans-client");
 
 const router = Router();
 
-// Create booking
-router.post(
-  "/",
-  authMiddleware,
-  async (req: Request, res: Response): Promise<void> => {
-    try {
-      const {
-        service,
-        shoe_type,
-        pickup_address,
-        pickup_date,
-        pickup_time,
-        notes,
-      } = req.body;
-      const userId = (req as any).user.userId;
+// 2. Konfigurasi Midtrans Snap
+const snap = new midtransClient.Snap({
+  isProduction: false, // Mode Sandbox (Testing)
+  serverKey: process.env.MIDTRANS_SERVER_KEY, // ⚠️ Masukkan Server Key dari Dashboard Midtrans
+});
 
-      // Validation
-      if (
-        !service ||
-        !shoe_type ||
-        !pickup_address ||
-        !pickup_date ||
-        !pickup_time
-      ) {
-        res.status(400).json({ error: "All required fields must be filled" });
+// --- CREATE BOOKING & GET PAYMENT TOKEN ---
+router.post("/", authMiddleware, async (req: Request, res: Response): Promise<void> => {
+  try {
+
+    console.log("DEBUG USER DATA:", (req as any).user);
+    const userId = (req as any).user.userId;
+    const {
+      service,
+      shoe_name,
+      shoe_size,
+      shoe_type,
+      pickup_address,
+      pickup_date,
+      pickup_time,
+      notes,
+      total_price // Frontend wajib kirim ini
+    } = req.body;
+
+    // --- FIX PENTING: VALIDASI HARGA ---
+    // Pastikan total_price ada. Jika tidak, ambil default dummy atau reject.
+    let finalPrice = Number(total_price);
+    
+    if (isNaN(finalPrice) || finalPrice <= 0) {
+        console.error("Harga Invalid diterima:", total_price);
+        // Fallback safety (misal 1000 perak) atau return error
+        // Disini kita return error agar ketahuan
+        res.status(400).json({ error: "Total harga tidak valid (0 atau null)" });
         return;
-      }
-
-      // Insert booking
-      const [result] = await pool.query<ResultSetHeader>(
-        `INSERT INTO bookings 
-      (user_id, service, shoe_type, pickup_address, pickup_date, pickup_time, notes, status) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')`,
-        [
-          userId,
-          service,
-          shoe_type,
-          pickup_address,
-          pickup_date,
-          pickup_time,
-          notes || null,
-        ]
-      );
-
-      res.status(201).json({
-        message: "Booking created successfully",
-        booking: {
-          id: result.insertId,
-          service,
-          shoe_type,
-          pickup_address,
-          pickup_date,
-          pickup_time,
-          notes,
-          status: "pending",
-        },
-      });
-    } catch (error) {
-      console.error("[v0] Create booking error:", error);
-      res.status(500).json({ error: "Internal server error" });
     }
-  }
-);
+    
+    // Bulatkan agar tidak desimal
+    finalPrice = Math.round(finalPrice);
+    // ------------------------------------
 
-// Get all bookings (for logged in user)
-router.get(
-  "/",
-  authMiddleware,
-  async (req: Request, res: Response): Promise<void> => {
+    // A. Simpan ke Database dulu (Status awal: 'pending')
+    const [result] = await pool.query<ResultSetHeader>(
+      `INSERT INTO bookings 
+      (user_id, service, shoe_name, shoe_size, shoe_type, pickup_address, pickup_date, pickup_time, notes, status, created_at) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', NOW())`,
+      [userId, service, shoe_name, shoe_size, shoe_type, pickup_address, pickup_date, pickup_time, notes]
+    );
+
+    const bookingId = result.insertId;
+
+    // B. Siapkan Parameter untuk Midtrans
+    // Order ID harus unik, kita gabungkan 'ORDER-' + bookingId + timestamp
+    const orderId = `ORDER-${bookingId}-${Date.now()}`;
+    const grossAmount = finalPrice; // Midtrans menolak desimal
+
+    const parameter = {
+      transaction_details: {
+        order_id: orderId,
+        gross_amount: grossAmount,
+      },
+      customer_details: {
+        first_name: (req as any).user.name,
+        email: (req as any).user.email,
+        phone: (req as any).user.phone,
+      },
+      item_details: [{
+          id: service.substring(0, 50), // ID item (optional)
+          price: grossAmount,
+          quantity: 1,
+          name: `${service} (${shoe_name} - ${shoe_size})`.substring(0, 50)
+      }]
+    };
+
+    // C. Minta Token ke Midtrans
+    const transaction = await snap.createTransaction(parameter);
+    
+    // D. Kirim Token & Booking ID ke Frontend
+    res.json({ 
+      message: "Booking Created", 
+      bookingId: bookingId,
+      token: transaction.token 
+    });
+
+  } catch (error) {
+    console.error("Booking Error:", error);
+    res.status(500).json({ error: "Gagal memproses booking" });
+  }
+});
+
+// --- ENDPOINT BARU: Update Status ke 'processing' (Setelah Bayar) ---
+router.post("/payment-success", authMiddleware, async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = (req as any).user.userId;
+        const { bookingId } = req.body;
+        
+        // Update status dari 'pending' ke 'processing' (alias "Proses")
+        await pool.query(
+            "UPDATE bookings SET status = 'processing' WHERE id = ?",
+            [bookingId]
+        );
 
-      const [bookings] = await pool.query<RowDataPacket[]>(
-        `SELECT b.*, u.name as user_name, u.email as user_email 
-       FROM bookings b 
-       JOIN users u ON b.user_id = u.id 
-       WHERE b.user_id = ? 
-       ORDER BY b.created_at DESC`,
-        [userId]
-      );
-
-      res.json({
-        bookings,
-      });
+        res.json({ message: "Status updated to processing" });
     } catch (error) {
-      console.error("[v0] Get bookings error:", error);
-      res.status(500).json({ error: "Internal server error" });
+        console.error(error);
+        res.status(500).json({ error: "Gagal update status" });
     }
+});
+
+
+router.get("/", authMiddleware, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const user = (req as any).user;
+    const userId = user.userId;
+
+    // Ambil data booking milik user yang sedang login saja
+    // Diurutkan dari yang terbaru (DESC)
+    const [rows] = await pool.query(
+      `SELECT * FROM bookings 
+       WHERE user_id = ? 
+       ORDER BY created_at DESC`,
+      [userId]
+    );
+
+    res.json(rows);
+  } catch (error) {
+    console.error("Fetch Booking Error:", error);
+    res.status(500).json({ error: "Gagal mengambil data booking" });
   }
-);
-
-// Get booking by ID
-router.get(
-  "/:id",
-  authMiddleware,
-  async (req: Request, res: Response): Promise<void> => {
-    try {
-      const { id } = req.params;
-      const userId = (req as any).user.userId;
-
-      const [bookings] = await pool.query<RowDataPacket[]>(
-        `SELECT b.*, u.name as user_name, u.email as user_email 
-       FROM bookings b 
-       JOIN users u ON b.user_id = u.id 
-       WHERE b.id = ? AND b.user_id = ?`,
-        [id, userId]
-      );
-
-      if (bookings.length === 0) {
-        res.status(404).json({ error: "Booking not found" });
-        return;
-      }
-
-      res.json({
-        booking: bookings[0],
-      });
-    } catch (error) {
-      console.error("[v0] Get booking error:", error);
-      res.status(500).json({ error: "Internal server error" });
-    }
-  }
-);
-
+});
 export default router;

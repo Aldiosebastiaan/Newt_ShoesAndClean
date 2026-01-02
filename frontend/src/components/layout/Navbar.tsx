@@ -4,11 +4,17 @@ import Link from "next/link";
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 
 export function Navbar() {
+  const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, isAuthenticated, logout } = useAuth();
   const router = useRouter();
+
+  if (pathname.startsWith("/admin")) {
+    return null;
+  }
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -60,6 +66,17 @@ export function Navbar() {
           >
             Booking
           </Link>
+          
+          {/* MENU ADMIN (Hanya muncul jika role = admin) */}
+          {isAuthenticated && user?.role === 'admin' && (
+            <Link
+              href="/admin"
+              className="text-red-600 hover:text-red-800 font-bold transition-colors duration-200"
+            >
+              Admin Dashboard
+            </Link>
+          )}
+
           {isAuthenticated && (
             <Link
               href="/my-bookings"
@@ -153,6 +170,12 @@ export function Navbar() {
                     {user?.name}
                   </p>
                   <p className="text-sm text-[#5c4a2f]">{user?.email}</p>
+                  {/* Label Role di Mobile Menu */}
+                  {user?.role === 'admin' && (
+                    <span className="inline-block mt-1 px-2 py-0.5 text-xs font-bold bg-red-100 text-red-600 rounded">
+                      Admin Access
+                    </span>
+                  )}
                 </div>
               ) : (
                 <span className="text-xl font-extrabold text-[#252527]">
@@ -191,6 +214,18 @@ export function Navbar() {
               >
                 Booking
               </Link>
+
+              {/* MOBILE ADMIN LINK */}
+              {isAuthenticated && user?.role === 'admin' && (
+                <Link
+                  href="/admin"
+                  onClick={closeMenu}
+                  className="flex items-center text-lg font-bold text-red-600 hover:text-red-800 p-3 rounded-lg hover:bg-red-50 transition-all duration-200"
+                >
+                  Admin Dashboard
+                </Link>
+              )}
+
               {isAuthenticated && (
                 <Link
                   href="/my-bookings"

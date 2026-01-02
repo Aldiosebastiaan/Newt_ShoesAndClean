@@ -7,18 +7,22 @@ import {
   useEffect,
   type ReactNode,
 } from "react";
-import { authApi } from "@/lib/api";
+import { authApi } from "@/lib/api"; 
 
+// Definisi tipe User
 interface User {
   id: number;
   name: string;
   email: string;
   phone?: string;
+  role: string; // Pastikan role ada
 }
 
+// Update Interface Context: Tambahkan isLoading
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
+  isLoading: boolean; 
   logout: () => void;
   refreshUser: () => void;
 }
@@ -28,14 +32,25 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  
+  // 1. Tambahkan State Loading (Default true)
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const storedUser = authApi.getUser();
-    const token = authApi.getToken();
+    // Gunakan try-finally agar loading mati apapun yang terjadi
+    try {
+      const storedUser = authApi.getUser() as User | null;
+      const token = authApi.getToken();
 
-    if (storedUser && token) {
-      setUser(storedUser);
-      setIsAuthenticated(true);
+      if (storedUser && token) {
+        setUser(storedUser);
+        setIsAuthenticated(true);
+      }
+    } catch (error) {
+      console.error("Auth init error:", error);
+    } finally {
+      // 2. Matikan loading setelah pengecekan selesai
+      setIsLoading(false);
     }
   }, []);
 
@@ -43,21 +58,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     authApi.logout();
     setUser(null);
     setIsAuthenticated(false);
+    // Tidak perlu reset loading di sini
   };
 
   const refreshUser = () => {
-    const storedUser = authApi.getUser();
-    const token = authApi.getToken();
+    try {
+      const storedUser = authApi.getUser() as User | null;
+      const token = authApi.getToken();
 
-    if (storedUser && token) {
-      setUser(storedUser);
-      setIsAuthenticated(true);
+      if (storedUser && token) {
+        setUser(storedUser);
+        setIsAuthenticated(true);
+      }
+    } catch (error) {
+      console.error("Auth refresh error:", error);
     }
   };
 
   return (
     <AuthContext.Provider
-      value={{ user, isAuthenticated, logout, refreshUser }}
+      // 3. Masukkan isLoading ke dalam value provider
+      value={{ user, isAuthenticated, isLoading, logout, refreshUser }}
     >
       {children}
     </AuthContext.Provider>

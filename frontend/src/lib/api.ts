@@ -1,187 +1,198 @@
-// API utility functions for backend communication
+import axios from "axios";
+import Cookies from "js-cookie";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
+// --- Tipe Data Response Standar ---
 interface ApiResponse<T = any> {
   data?: T;
   error?: string;
   message?: string;
+  token?: string;     // Khusus untuk response Midtrans
+  bookingId?: number; // Khusus untuk response Midtrans
 }
 
-// Auth API
+// --- 1. AXIOS INSTANCE ---
+export const api = axios.create({
+  baseURL: API_URL,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
+// Interceptor: Otomatis pasang Token dari Cookie ke setiap request
+api.interceptors.request.use(
+  (config) => {
+    const token = Cookies.get("token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// --- 2. AUTH API ---
 export const authApi = {
   login: async (email: string, password: string): Promise<ApiResponse> => {
     try {
-      const response = await fetch(`${API_URL}/auth/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
+      const response = await api.post("/auth/login", { email, password });
+      const data = response.data;
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        return { error: data.error || "Login failed" };
-      }
-
-      // Store token in localStorage
+      // SIMPAN TOKEN KE COOKIES & LOCALSTORAGE
       if (data.token) {
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("user", JSON.stringify(data.user));
+        Cookies.set("token", data.token, { expires: 7 }); 
+        Cookies.set("user_data", JSON.stringify(data.user), { expires: 7 });
+        
+        if (typeof window !== "undefined") {
+          localStorage.setItem("token", data.token);
+          localStorage.setItem("user", JSON.stringify(data.user));
+        }
       }
 
       return { data };
-    } catch (error) {
-      return { error: "Network error. Please try again." };
+    } catch (error: any) {
+      return { error: error.response?.data?.error || "Login failed" };
     }
   },
 
-  register: async (
-    name: string,
-    email: string,
-    password: string,
-    phone?: string
-  ): Promise<ApiResponse> => {
+  register: async (name: string, email: string, password: string, phone?: string): Promise<ApiResponse> => {
     try {
-      const response = await fetch(`${API_URL}/auth/register`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ name, email, password, phone }),
-      });
+      const response = await api.post("/auth/register", { name, email, password, phone });
+      const data = response.data;
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        return { error: data.error || "Registration failed" };
-      }
-
-      // Store token in localStorage
       if (data.token) {
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("user", JSON.stringify(data.user));
+        Cookies.set("token", data.token, { expires: 7 });
+        Cookies.set("user_data", JSON.stringify(data.user), { expires: 7 });
+        
+        if (typeof window !== "undefined") {
+          localStorage.setItem("token", data.token);
+          localStorage.setItem("user", JSON.stringify(data.user));
+        }
       }
 
       return { data };
-    } catch (error) {
-      return { error: "Network error. Please try again." };
+    } catch (error: any) {
+      return { error: error.response?.data?.error || "Registration failed" };
     }
   },
 
   logout: () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    Cookies.remove("token");
+    Cookies.remove("user_data");
+    Cookies.remove("user_role");
+
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+    }
   },
 
   getToken: (): string | null => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("token");
-    }
-    return null;
+    return Cookies.get("token") || (typeof window !== "undefined" ? localStorage.getItem("token") : null);
   },
 
   getUser: () => {
+    const cookieUser = Cookies.get("user_data");
+    if (cookieUser) {
+      try { return JSON.parse(cookieUser); } catch {}
+    }
     if (typeof window !== "undefined") {
-      const user = localStorage.getItem("user");
-      return user ? JSON.parse(user) : null;
+      const localUser = localStorage.getItem("user");
+      return localUser ? JSON.parse(localUser) : null;
     }
     return null;
   },
 
   isAuthenticated: (): boolean => {
-    return !!authApi.getToken();
+    return !!Cookies.get("token");
   },
 };
 
-// Booking API
+// --- 3. BOOKING API (Midtrans Ready) ---
 export const bookingApi = {
-  create: async (bookingData: {
-    service: string;
-    shoe_type: string;
-    pickup_address: string;
-    pickup_date: string;
-    pickup_time: string;
-    notes?: string;
-  }): Promise<ApiResponse> => {
+  // CREATE: Return raw data agar frontend bisa akses .token dan .bookingId
+  create: async (bookingData: any) => {
     try {
-      const token = authApi.getToken();
-      if (!token) {
-        return { error: "Please login first" };
-      }
-
-      const response = await fetch(`${API_URL}/booking`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(bookingData),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        return { error: data.error || "Booking failed" };
-      }
-
-      return { data };
-    } catch (error) {
-      return { error: "Network error. Please try again." };
+      // Endpoint plural '/bookings' sesuai backend route
+      const response = await api.post("/bookings", bookingData);
+      return response.data; // Mengembalikan { message, bookingId, token }
+    } catch (error: any) {
+      return { error: error.response?.data?.error || "Booking failed" };
     }
   },
 
+  // GET ALL (User History / Admin)
   getAll: async (): Promise<ApiResponse> => {
     try {
-      const token = authApi.getToken();
-      if (!token) {
-        return { error: "Please login first" };
-      }
+      const response = await api.get("/bookings");
+      return { data: response.data };
+    } catch (error: any) {
+      return { error: error.response?.data?.error || "Failed to fetch bookings" };
+    }
+  },
 
-      const response = await fetch(`${API_URL}/booking`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        return { error: data.error || "Failed to fetch bookings" };
-      }
-
-      return { data };
-    } catch (error) {
-      return { error: "Network error. Please try again." };
+  // UPDATE PAYMENT STATUS (Dipanggil setelah Midtrans Sukses)
+  updatePaymentStatus: async (bookingId: number) => {
+    try {
+      const response = await api.post("/bookings/payment-success", { bookingId });
+      return response.data;
+    } catch (error: any) {
+      return { error: error.response?.data?.error || "Failed update status" };
     }
   },
 
   getById: async (id: string): Promise<ApiResponse> => {
     try {
-      const token = authApi.getToken();
-      if (!token) {
-        return { error: "Please login first" };
-      }
+      const response = await api.get(`/bookings/${id}`);
+      return { data: response.data };
+    } catch (error: any) {
+      return { error: error.response?.data?.error || "Failed to fetch booking" };
+    }
+  },
+};
 
-      const response = await fetch(`${API_URL}/booking/${id}`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+// --- 4. SERVICES API (Public & Admin) ---
+export const servicesApi = {
+  // GET ALL: Endpoint Public (Tanpa Login)
+  getAll: async () => {
+    try {
+      const res = await api.get("/services"); 
+      return res.data;
+    } catch (error: any) {
+      // Jika error 404/Network, kembalikan array kosong agar tidak crash
+      console.error("Service fetch error", error);
+      return [];
+    }
+  },
 
-      const data = await response.json();
+  // ADMIN: Create
+  create: async (data: any) => {
+    try {
+      const res = await api.post("/admin/services", data);
+      return res.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || "Gagal membuat layanan");
+    }
+  },
 
-      if (!response.ok) {
-        return { error: data.error || "Failed to fetch booking" };
-      }
+  // ADMIN: Update
+  update: async (id: number, data: any) => {
+    try {
+      const res = await api.put(`/admin/services/${id}`, data);
+      return res.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || "Gagal update layanan");
+    }
+  },
 
-      return { data };
-    } catch (error) {
-      return { error: "Network error. Please try again." };
+  // ADMIN: Delete
+  delete: async (id: number) => {
+    try {
+      const res = await api.delete(`/admin/services/${id}`);
+      return res.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || "Gagal menghapus layanan");
     }
   },
 };

@@ -4,6 +4,15 @@ import jwt from "jsonwebtoken";
 interface JwtPayload {
   userId: number;
   email: string;
+  role: string;
+}
+
+declare global {
+  namespace Express {
+    interface Request {
+      user?: JwtPayload;
+    }
+}
 }
 
 export const authMiddleware = (
@@ -31,4 +40,16 @@ export const authMiddleware = (
     res.status(401).json({ error: "Invalid token" });
     return;
   }
+};
+
+export const adminMiddleware = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void => {
+  if (!req.user || req.user.role !== "admin") {
+    res.status(403).json({ error: "Access denied. Admins Only" });
+    return;
+  }
+  next();
 };
