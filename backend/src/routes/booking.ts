@@ -51,7 +51,7 @@ router.post("/", authMiddleware, async (req: Request, res: Response): Promise<vo
     const [result] = await pool.query<ResultSetHeader>(
       `INSERT INTO bookings 
       (user_id, service, shoe_name, shoe_size, shoe_type, pickup_address, pickup_date, pickup_time, notes, status, created_at) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', NOW())`,
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW())`,
       [userId, service, shoe_name, shoe_size, shoe_type, pickup_address, pickup_date, pickup_time, notes]
     );
 
