@@ -133,7 +133,7 @@ export const bookingApi = {
   },
 
   // UPDATE PAYMENT STATUS (Dipanggil setelah Midtrans Sukses)
-  updatePaymentStatus: async (bookingId: number) => {
+updatePaymentStatus: async (bookingId: number) => {
     try {
       const response = await api.post("/bookings/payment-success", { bookingId });
       return response.data;

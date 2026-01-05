@@ -3,9 +3,10 @@ import cors from "cors";
 import dotenv from "dotenv";
 import authRoutes from "./routes/auth";
 import bookingRoutes from "./routes/booking";
-import "./config/database"; // Initialize database connection
+import "./config/database";
 import adminRoutes from "./routes/admin";
 import servicesRoutes from "./routes/services";
+import deliveryRoutes from "./routes/delivery";
 
 dotenv.config();
 
@@ -22,6 +23,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/services", servicesRoutes);
+app.use("/api/delivery", deliveryRoutes);
 
 const PORT = process.env.PORT || 5000;
 

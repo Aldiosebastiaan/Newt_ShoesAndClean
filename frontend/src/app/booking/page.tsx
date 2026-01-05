@@ -36,8 +36,8 @@ export default function BookingPage() {
     name: "",
     phone: "",
     pickup_address: "",
-    shoe_name: "", 
-    shoe_size: "", 
+    shoe_name: "",  // Input Baru
+    shoe_size: "",  // Input Baru
     shoe_type: "Sneakers",
     pickup_date: "",
     pickup_time: "",
@@ -176,19 +176,18 @@ export default function BookingPage() {
   };
 
   return (
-    // CONTAINER UTAMA: Full Cream (#F9F8F6) & Full Height
-    <div className="min-h-screen md:h-screen bg-linear-to-b from-[#f9f5eb] to-[#f4ecdf] flex flex-col md:flex-row font-sans md:overflow-hidden text-[#393E46]">
+    // CONTAINER UTAMA: Full Cream (#F9F8F6) & Full Height (Split Screen)
+    <div className="min-h-screen md:h-screen bg-[#F9F8F6] flex flex-col md:flex-row font-sans md:overflow-hidden text-[#393E46]">
       
       {/* ==============================================
-          BAGIAN KIRI: BRANDING (Background Tetap Cream)
+          BAGIAN KIRI: BRANDING (FIXED)
          ============================================== */}
       <motion.div 
         initial={{ opacity: 0, x: -30 }}
         animate={{ opacity: 1, x: 0 }}
-        // bg-[#F9F8F6] (Cream) bukan gelap
-        className="w-full md:w-5/12 bg-linear-to-b from-[#f9f5eb] to-[#f4ecdf] p-8 md:p-16 flex flex-col justify-center relative md:h-full z-10"
+        className="w-full md:w-5/12 bg-[#F9F8F6] p-8 md:p-16 flex flex-col justify-center relative md:h-full z-10"
       >
-         {/* Dekorasi Background Halus (Gold Pudar) */}
+         {/* Dekorasi Background Halus */}
          <div className="absolute top-0 right-0 w-64 h-64 bg-[#be9020]/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl"></div>
          <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#be9020]/5 rounded-full translate-y-1/2 -translate-x-1/2 blur-3xl"></div>
 
@@ -198,7 +197,7 @@ export default function BookingPage() {
                 Newt Shoes & Clean
             </span>
 
-            {/* Headline Besar - Warna Teks Gelap (#393E46) */}
+            {/* Headline Besar */}
             <h1 className="text-4xl md:text-5xl font-extrabold text-[#393E46] leading-tight mb-2">
                 Booking Layanan
             </h1>
@@ -206,12 +205,12 @@ export default function BookingPage() {
                 Cuci & Perawatan <br/> Sepatu
             </h1>
 
-            {/* Deskripsi - Warna Teks Abu Gelap */}
+            {/* Deskripsi */}
             <p className="text-[#393E46]/70 text-lg mb-10 leading-relaxed">
                 Percayakan sepatu favoritmu kepada tim profesional kami. Proses mudah, cepat, dan bisa pickup & delivery langsung ke rumah.
             </p>
 
-            {/* List Fitur - Warna Teks Gelap */}
+            {/* List Fitur */}
             <ul className="space-y-5">
                 {[
                     "Deep Cleaning & Treatment Profesional",
@@ -232,13 +231,12 @@ export default function BookingPage() {
       </motion.div>
 
       {/* ==============================================
-          BAGIAN KANAN: SCROLLABLE FORM
+          BAGIAN KANAN: FORM BOOKING (SCROLLABLE)
          ============================================== */}
       <motion.div 
         initial={{ opacity: 0, x: 30 }}
         animate={{ opacity: 1, x: 0 }}
-        // Background sama (#F9F8F6)
-        className="w-full md:w-7/12 bg-linear-to-b from-[#f9f5eb] to-[#f4ecdf] md:h-full md:overflow-y-auto"
+        className="w-full md:w-7/12 bg-[#F9F8F6] md:h-full md:overflow-y-auto"
       >
         <div className="p-4 md:p-12 lg:p-16">
             <div className="max-w-xl mx-auto bg-white p-6 md:p-10 rounded-3xl shadow-xl border border-[#be9020]/10">
@@ -312,7 +310,7 @@ export default function BookingPage() {
                 </div>
                 </div>
 
-                {/* 3. Detail Sepatu */}
+                {/* 3. Detail Sepatu (INPUT BARU) */}
                 <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100">
                     <div className="flex items-center gap-2 mb-4 border-b border-gray-200 pb-2">
                         <span className="text-lg">👟</span>

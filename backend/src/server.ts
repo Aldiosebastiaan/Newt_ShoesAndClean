@@ -9,6 +9,7 @@ import authRoutes from "./routes/auth";
 import bookingRoutes from "./routes/booking";
 import adminRoutes from "./routes/admin";
 import servicesRoutes from "./routes/services";
+import deliveryRoutes from "./routes/delivery";
 
 dotenv.config();
 
@@ -30,6 +31,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/services", servicesRoutes);
+app.use("/api/delivery", deliveryRoutes);
 
 // Health check
 app.get("/api/health", (req: Request, res: Response) => {

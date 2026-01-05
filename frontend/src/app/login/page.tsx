@@ -1,17 +1,18 @@
 "use client";
 
 import type React from "react";
-
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { authApi } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
+import { toast } from "react-hot-toast";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { refreshUser } = useAuth();
+  const { refreshUser } = useAuth(); // Refresh session jika perlu
+  
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -24,14 +25,40 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
 
-    const result = await authApi.login(formData.email, formData.password);
+    // FIX 1: Tambahkan blok try di sini
+    try {
+      const result = await authApi.login(formData.email, formData.password);
 
-    if (result.error) {
-      setError(result.error);
+      if (result.error) {
+        setError(result.error);
+        setLoading(false);
+      } else {
+        // FIX 2: Gunakan (result as any) atau result.data untuk menghindari error TypeScript
+        // Kita gunakan 'any' agar aman jika struktur type-nya belum update
+        const user = (result as any).user || result.data?.user;
+        
+        if (user) {
+            toast.success(`Selamat datang, ${user.name}!`);
+
+            // Refresh user context agar aplikasi tahu user sudah login
+            if (refreshUser) refreshUser(); 
+
+            // Cek Role untuk Redirect
+            if (user.role === "admin") {
+                router.push("/admin");
+            } else if (user.role === "courier") {
+                router.push("/delivery");
+            } else {
+                router.push("/booking");
+            }
+        } else {
+            throw new Error("Data user tidak ditemukan.");
+        }
+      }
+    } catch (err) {
+      console.error(err);
+      setError("Login gagal. Periksa koneksi atau kredensial.");
       setLoading(false);
-    } else {
-      refreshUser();
-      router.push("/");
     }
   };
 
@@ -60,7 +87,7 @@ export default function LoginPage() {
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6"
+              className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6 text-sm"
             >
               {error}
             </motion.div>

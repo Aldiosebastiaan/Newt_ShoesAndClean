@@ -96,18 +96,21 @@ router.post("/", authMiddleware, async (req: Request, res: Response): Promise<vo
   }
 });
 
-// --- ENDPOINT BARU: Update Status ke 'processing' (Setelah Bayar) ---
+// --- ENDPOINT BARU: Update Status ke 'confirmed' (Setelah Bayar) ---
 router.post("/payment-success", authMiddleware, async (req: Request, res: Response): Promise<void> => {
     try {
         const { bookingId } = req.body;
         
-        // Update status dari 'pending' ke 'processing' (alias "Proses")
+        // --- PERBAIKAN DI SINI ---
+        // SEBELUMNYA: status = 'processing'
+        // UBAH JADI: status = 'confirmed'
+        // Agar masuk antrian kurir (Perlu Dijemput)
         await pool.query(
-            "UPDATE bookings SET status = 'processing' WHERE id = ?",
+            "UPDATE bookings SET status = 'confirmed' WHERE id = ?",
             [bookingId]
         );
 
-        res.json({ message: "Status updated to processing" });
+        res.json({ message: "Status updated to confirmed" });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: "Gagal update status" });

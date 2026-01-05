@@ -89,6 +89,10 @@ export default function AdminLayout({
             <span>📦</span> Pesanan Masuk
           </Link>
 
+          <Link href="/delivery" className={getMenuClass("/delivery")}>
+            <span>🛵</span> Delivery Panel
+          </Link>
+
           <Link href="/admin/services" className={getMenuClass("/admin/services")}>
             <span>🏷️</span> Layanan & Harga
           </Link>
