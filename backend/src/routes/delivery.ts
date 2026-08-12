@@ -10,7 +10,7 @@ const router = express.Router();
 router.get("/tasks", authMiddleware, async (req: Request, res: Response): Promise<void> => {
   try {
     // UPDATE QUERY: Tambahkan 'on_pickup' dan 'on_delivery' agar tugas tidak hilang saat proses
-    const [rows] = await pool.query(
+    const { rows } = await pool.query(
       `SELECT * FROM bookings 
        WHERE status IN ('confirmed', 'on_pickup', 'processing', 'on_delivery') 
        AND pickup_address IS NOT NULL AND pickup_address != ''
@@ -44,7 +44,7 @@ router.patch("/:id/update-status", authMiddleware, async (req: Request, res: Res
     }
 
     await pool.query(
-      "UPDATE bookings SET status = ? WHERE id = ?",
+      "UPDATE bookings SET status = $1 WHERE id = $2",
       [newStatus, id]
     );
 
