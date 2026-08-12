@@ -1,7 +1,6 @@
 import { Router, type Request, type Response } from "express";
 import pool from "../config/database";
 import { authMiddleware } from "../middleware/auth";
-import type { ResultSetHeader } from "mysql2";
 // 1. Import Midtrans
 const midtransClient = require("midtrans-client");
 
@@ -48,14 +47,14 @@ router.post("/", authMiddleware, async (req: Request, res: Response): Promise<vo
     // ------------------------------------
 
     // A. Simpan ke Database dulu (Status awal: 'pending')
-    const [result] = await pool.query<ResultSetHeader>(
+    const { rows: insertedRows } = await pool.query(
       `INSERT INTO bookings 
       (user_id, service, shoe_name, shoe_size, shoe_type, pickup_address, pickup_date, pickup_time, notes, status, created_at) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW())`,
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending', NOW()) RETURNING id`,
       [userId, service, shoe_name, shoe_size, shoe_type, pickup_address, pickup_date, pickup_time, notes]
     );
 
-    const bookingId = result.insertId;
+    const bookingId = insertedRows[0].id;
 
     // B. Siapkan Parameter untuk Midtrans
     // Order ID harus unik, kita gabungkan 'ORDER-' + bookingId + timestamp
@@ -106,7 +105,7 @@ router.post("/payment-success", authMiddleware, async (req: Request, res: Respon
         // UBAH JADI: status = 'confirmed'
         // Agar masuk antrian kurir (Perlu Dijemput)
         await pool.query(
-            "UPDATE bookings SET status = 'confirmed' WHERE id = ?",
+            "UPDATE bookings SET status = 'confirmed' WHERE id = $1",
             [bookingId]
         );
 
@@ -125,9 +124,9 @@ router.get("/", authMiddleware, async (req: Request, res: Response): Promise<voi
 
     // Ambil data booking milik user yang sedang login saja
     // Diurutkan dari yang terbaru (DESC)
-    const [rows] = await pool.query(
+    const { rows } = await pool.query(
       `SELECT * FROM bookings 
-       WHERE user_id = ? 
+       WHERE user_id = $1 
        ORDER BY created_at DESC`,
       [userId]
     );

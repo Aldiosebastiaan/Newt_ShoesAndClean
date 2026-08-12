@@ -2,8 +2,6 @@ import { Router, type Request, type Response } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import pool from "../config/database";
-import type { RowDataPacket, ResultSetHeader } from "mysql2";
-
 const router = Router();
 
 // Register
@@ -18,8 +16,8 @@ router.post("/register", async (req: Request, res: Response): Promise<void> => {
     }
 
     // Check if user exists
-    const [existingUsers] = await pool.query<RowDataPacket[]>(
-      "SELECT * FROM users WHERE email = ?",
+    const { rows: existingUsers } = await pool.query(
+      "SELECT * FROM users WHERE email = $1",
       [email]
     );
 
@@ -32,14 +30,14 @@ router.post("/register", async (req: Request, res: Response): Promise<void> => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Insert user
-    const [result] = await pool.query<ResultSetHeader>(
-      "INSERT INTO users (name, email, password, phone) VALUES (?, ?, ?, ?)",
+    const { rows: insertedRows } = await pool.query(
+      "INSERT INTO users (name, email, password, phone) VALUES ($1, $2, $3, $4) RETURNING id",
       [name, email, hashedPassword, phone || null]
     );
 
     // Generate JWT
     const token = jwt.sign(
-      { userId: result.insertId, email },
+      { userId: insertedRows[0].id, email },
       process.env.JWT_SECRET || "your-secret-key",
       {
         expiresIn: "7d",
@@ -50,7 +48,7 @@ router.post("/register", async (req: Request, res: Response): Promise<void> => {
       message: "User registered successfully",
       token,
       user: {
-        id: result.insertId,
+        id: insertedRows[0].id,
         name,
         email,
         phone,
@@ -74,8 +72,8 @@ router.post("/login", async (req: Request, res: Response): Promise<void> => {
     }
 
     // Find user
-    const [users] = await pool.query<RowDataPacket[]>(
-      "SELECT * FROM users WHERE email = ?",
+    const { rows: users } = await pool.query(
+      "SELECT * FROM users WHERE email = $1",
       [email]
     );
 

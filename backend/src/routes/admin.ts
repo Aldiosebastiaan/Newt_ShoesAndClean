@@ -1,7 +1,6 @@
 import { Router, type Request, type Response } from "express";
 import pool from "../config/database";
 import { authMiddleware, adminMiddleware } from "../middleware/auth";
-import type { RowDataPacket } from "mysql2";
 
 const router = Router();
 
@@ -13,22 +12,22 @@ router.get(
   async (req: Request, res: Response): Promise<void> => {
     try {
       // 1. Hitung Total User
-      const [userCount] = await pool.query<RowDataPacket[]>(
+      const { rows: userCount } = await pool.query(
         "SELECT COUNT(*) as total FROM users WHERE role = 'user'"
       );
 
       // 2. Hitung Total Booking
-      const [bookingCount] = await pool.query<RowDataPacket[]>(
+      const { rows: bookingCount } = await pool.query(
         "SELECT COUNT(*) as total FROM bookings"
       );
 
       // 3. Hitung Booking berdasarkan Status (Pending, Confirmed, Completed)
-      const [statusStats] = await pool.query<RowDataPacket[]>(
+      const { rows: statusStats } = await pool.query(
         "SELECT status, COUNT(*) as count FROM bookings GROUP BY status"
       );
 
       // 4. Ambil 5 Booking Terbaru (untuk real-time feed)
-      const [recentBookings] = await pool.query<RowDataPacket[]>(
+      const { rows: recentBookings } = await pool.query(
         `SELECT b.id, u.name as user_name, b.service, b.status, b.created_at 
          FROM bookings b 
          JOIN users u ON b.user_id = u.id 
@@ -66,7 +65,7 @@ router.patch(
         }
 
         await pool.query(
-            "UPDATE bookings SET status = ? WHERE id = ?",
+            "UPDATE bookings SET status = $1 WHERE id = $2",
             [status, id]
         );
 
@@ -84,7 +83,7 @@ router.get(
   async (req: Request, res: Response): Promise<void> => {
     try {
       // Query join untuk mengambil nama user pemilik booking
-      const [bookings] = await pool.query<RowDataPacket[]>(
+      const { rows: bookings } = await pool.query(
         `SELECT b.*, u.name as user_name, u.email as user_email, u.phone as user_phone
          FROM bookings b 
          JOIN users u ON b.user_id = u.id 
@@ -106,29 +105,29 @@ router.get(
   async (req: Request, res: Response): Promise<void> => {
     try {
       // 1. Data Harian (7 Hari Terakhir)
-      const [dailyStats] = await pool.query<RowDataPacket[]>(
+      const { rows: dailyStats } = await pool.query(
         `SELECT 
-           DATE_FORMAT(created_at, '%Y-%m-%d') as date, 
+           TO_CHAR(created_at, 'YYYY-MM-DD') as date, 
            COUNT(*) as total 
          FROM bookings 
-         WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
-         GROUP BY DATE(created_at) 
+         WHERE created_at >= CURRENT_DATE - INTERVAL '7 days'
+         GROUP BY 1 
          ORDER BY date ASC`
       );
 
       // 2. Data Bulanan (12 Bulan Terakhir)
-      const [monthlyStats] = await pool.query<RowDataPacket[]>(
+      const { rows: monthlyStats } = await pool.query(
         `SELECT 
-           DATE_FORMAT(created_at, '%Y-%m') as date, 
+           TO_CHAR(created_at, 'YYYY-MM') as date, 
            COUNT(*) as total 
          FROM bookings 
-         WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
-         GROUP BY DATE_FORMAT(created_at, '%Y-%m') 
+         WHERE created_at >= CURRENT_DATE - INTERVAL '12 months'
+         GROUP BY 1 
          ORDER BY date ASC`
       );
 
       // 3. Status Distribusi (Pie Chart)
-      const [statusStats] = await pool.query<RowDataPacket[]>(
+      const { rows: statusStats } = await pool.query(
         `SELECT status, COUNT(*) as total FROM bookings GROUP BY status`
       );
 
@@ -149,7 +148,7 @@ router.get(
 // 1. GET ALL SERVICES
 router.get("/services", authMiddleware, adminMiddleware, async (req, res) => {
   try {
-    const [rows] = await pool.query("SELECT * FROM services ORDER BY price ASC");
+    const { rows } = await pool.query("SELECT * FROM services ORDER BY price ASC");
     res.json(rows);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch services" });
@@ -161,7 +160,7 @@ router.post("/services", authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const { name, description, price, duration } = req.body;
     await pool.query(
-      "INSERT INTO services (name, description, price, duration) VALUES (?, ?, ?, ?)",
+      "INSERT INTO services (name, description, price, duration) VALUES ($1, $2, $3, $4)",
       [name, description, price, duration]
     );
     res.json({ message: "Service created successfully" });
@@ -176,7 +175,7 @@ router.put("/services/:id", authMiddleware, adminMiddleware, async (req, res) =>
     const { id } = req.params;
     const { name, description, price, duration } = req.body;
     await pool.query(
-      "UPDATE services SET name=?, description=?, price=?, duration=? WHERE id=?",
+      "UPDATE services SET name=$1, description=$2, price=$3, duration=$4 WHERE id=$5",
       [name, description, price, duration, id]
     );
     res.json({ message: "Service updated successfully" });
@@ -189,7 +188,7 @@ router.put("/services/:id", authMiddleware, adminMiddleware, async (req, res) =>
 router.delete("/services/:id", authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
-    await pool.query("DELETE FROM services WHERE id=?", [id]);
+    await pool.query("DELETE FROM services WHERE id=$1", [id]);
     res.json({ message: "Service deleted successfully" });
   } catch (error) {
     res.status(500).json({ error: "Failed to delete service" });
